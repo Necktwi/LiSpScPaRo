@@ -25,6 +25,8 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/exception/diagnostic_information.hpp>
+#include <FFJSON.h>
+#include <logger.h>
 #include "config.h"
 #include "connect.h"
 
@@ -88,6 +90,8 @@ private:
     
 };
 
+static FFJSON ffPlayers("file://Players.json");
+
 bool operator<(const PlayerPtr p1, const PlayerPtr p2) {
     return *p1<*p2;
 };
@@ -128,7 +132,47 @@ int main()
     string player;
     string password;
     string decision;
+    static map<PAWN, Pawn> mPawns;
+    static map<string, PAWN> msPawn;
+    static map<PAWN, string> mpPawn;
+    static map<uint8_t, string> mpPawnsAction;
+    PawnCountMap mPawnCount= { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
+    PawnCountMap mOPawnCount = { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
     
+    mPawns[LIZARD]		= { LIZARD, ROCK | SCISSORS, SPOCK | PAPER };
+    mPawns[SPOCK]		= { SPOCK, LIZARD | PAPER, SCISSORS | ROCK };
+    mPawns[SCISSORS]	= { SCISSORS, ROCK | SPOCK, PAPER | LIZARD };
+    mPawns[PAPER]		= { PAPER, SCISSORS | LIZARD, ROCK | SPOCK };
+    mPawns[ROCK]		= { ROCK, PAPER | SPOCK, LIZARD | SCISSORS };
+    
+    mpPawnsAction[SCISSORS | LIZARD] = "decapitated";
+    mpPawnsAction[SCISSORS | SPOCK] = "smashed";
+    mpPawnsAction[SCISSORS | PAPER] = "cut";
+    mpPawnsAction[SCISSORS | ROCK] = "blunted";
+    mpPawnsAction[LIZARD | SPOCK] = "poisoned";
+    mpPawnsAction[LIZARD | PAPER] = "eaten";
+    mpPawnsAction[LIZARD | ROCK] = "crushed";
+    mpPawnsAction[SPOCK | PAPER] = "disproved";
+    mpPawnsAction[SPOCK | ROCK] = "vaporized";
+    mpPawnsAction[PAPER | ROCK] = "covered";
+    
+    mpPawn[SPOCK]		= "Spock";
+    mpPawn[SCISSORS]	= "Scissors";
+    mpPawn[LIZARD]		= "Lizard";
+    mpPawn[PAPER]		= "Paper";
+    mpPawn[ROCK]		= "Rock";
+    
+    msPawn["li"]		= LIZARD;
+    msPawn["lizard"]	= LIZARD;
+    msPawn["spock"]		= SPOCK;
+    msPawn["sp"]		= SPOCK;
+    msPawn["scissors"]	= SCISSORS;
+    msPawn["sc"]		= SCISSORS;
+    msPawn["paper"]		= PAPER;
+    msPawn["pa"]		= PAPER;
+    msPawn["rock"]		= ROCK;
+    msPawn["ro"]		= ROCK;
+
     
     // Load players form archive
     ifstream ifs(PLAYERS);
@@ -251,46 +295,6 @@ chooseopponent:
     }
     mPlayer[sOpponent]=pOpponent;
     cout << "---------------------------------Good Luck!-----------------------------" << endl;
-    static map<PAWN, Pawn> mPawns;
-    static map<string, PAWN> msPawn;
-    static map<PAWN, string> mpPawn;
-    static map<uint8_t, string> mpPawnsAction;
-    PawnCountMap mPawnCount= { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
-    PawnCountMap mOPawnCount = { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
-    
-    mPawns[LIZARD]		= { LIZARD, ROCK | SCISSORS, SPOCK | PAPER };
-    mPawns[SPOCK]		= { SPOCK, LIZARD | PAPER, SCISSORS | ROCK };
-    mPawns[SCISSORS]	= { SCISSORS, ROCK | SPOCK, PAPER | LIZARD };
-    mPawns[PAPER]		= { PAPER, SCISSORS | LIZARD, ROCK | SPOCK };
-    mPawns[ROCK]		= { ROCK, PAPER | SPOCK, LIZARD | SCISSORS };
-    
-    mpPawnsAction[SCISSORS | LIZARD] = "decapitated";
-    mpPawnsAction[SCISSORS | SPOCK] = "smashed";
-    mpPawnsAction[SCISSORS | PAPER] = "cut";
-    mpPawnsAction[SCISSORS | ROCK] = "blunted";
-    mpPawnsAction[LIZARD | SPOCK] = "poisoned";
-    mpPawnsAction[LIZARD | PAPER] = "eaten";
-    mpPawnsAction[LIZARD | ROCK] = "crushed";
-    mpPawnsAction[SPOCK | PAPER] = "disproved";
-    mpPawnsAction[SPOCK | ROCK] = "vaporized";
-    mpPawnsAction[PAPER | ROCK] = "covered";
-    
-    mpPawn[SPOCK]		= "Spock";
-    mpPawn[SCISSORS]	= "Scissors";
-    mpPawn[LIZARD]		= "Lizard";
-    mpPawn[PAPER]		= "Paper";
-    mpPawn[ROCK]		= "Rock";
-    
-    msPawn["li"]		= LIZARD;
-    msPawn["lizard"]	= LIZARD;
-    msPawn["spock"]		= SPOCK;
-    msPawn["sp"]		= SPOCK;
-    msPawn["scissors"]	= SCISSORS;
-    msPawn["sc"]		= SCISSORS;
-    msPawn["paper"]		= PAPER;
-    msPawn["pa"]		= PAPER;
-    msPawn["rock"]		= ROCK;
-    msPawn["ro"]		= ROCK;
     unsigned int uiTotalGames = 0;
     unsigned int uiGamesWon = 0;
     float uiWinPercentage = 50;

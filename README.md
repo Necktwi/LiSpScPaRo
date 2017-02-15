@@ -14,6 +14,7 @@ windows
 -------
 1. Download https://cmake.org/files/v3.7/cmake-3.7.2-win64-x64.msi
 2. install it with option add to the system path checked
+3. Download and install https://www.microsoft.com/en-in/download/confirmation.aspx?id=5555
 
 
 **Installing boost**
