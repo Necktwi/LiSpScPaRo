@@ -1,9 +1,8 @@
 language: cpp
 env:
   global:
-    # Ubuntu version
-    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
-    
+   - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+
 sudo: true
 before_install:
    - |
@@ -34,7 +33,7 @@ before_install:
      make
      cd ../..
 script:
-   - mkdir -p build
+   - mkdir build
    - cd build
    - cmake -DDEPS_DIR=${DEPS_DIR} ..
    - make
