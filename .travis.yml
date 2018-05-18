@@ -1,0 +1,35 @@
+language: cpp
+sudo: enabled
+before_install:
+   - |
+     if [ $TRAVIS_OS_NAME = linux ]; then
+      sudo apt-get install libboost-dev
+     fi
+     if [ $TRAVIS_OS_NAME = osx ]; then
+      brew install boost
+     fi
+     cd ${DEPS_DIR}
+     git clone --depth=1 https://github.com/necktwi/ferrybase.git
+     cd ferrybase
+     mkdir build
+     cd build
+     cmake ..
+     make
+     cd ../..
+     git clone --depth=1 https://github.com/necktwi/logger.git
+     cd logger
+     mkdir build
+     cmake ..
+     make
+     cd ../..
+     git clone --depth=1 https://github.com/necktwi/FFJSON.git
+     cd FFJSON
+     mkdir build
+     cmake ..
+     make
+     cd ../..
+script:
+   - mkdir -p build
+   - cd build
+   - cmake -DDEPS_DIR=${DEPS_DIR} ..
+   - make

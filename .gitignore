@@ -5,7 +5,7 @@ build*/
 dist/
 nbproject/private/private.xml
 **/.DS_Store
-**/._.DS_Store
+**/._.*
 **/.dep.inc
 
 nbproject/private/

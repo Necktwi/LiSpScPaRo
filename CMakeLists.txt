@@ -1,15 +1,24 @@
 cmake_minimum_required (VERSION 3.5)
 include(GNUInstallDirs)
 project (LiSpScPaRo)
+message ("Generating build procedure for ${PROJECT_NAME} ...")
+
+if(NOT DEPS_DIR)
+   set(DEPS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
+endif ()
+add_subdirectory(../FFJSON ${DEPS_DIR}/FFJSON/build)
+if (NOT TARGET logger)
+   add_subdirectory(../logger ${DEPS_DIR}/logger/build)
+endif ()
+if (NOT TARGET ferrybase)
+   add_subdirectory(../ferrybase ${DEPS_DIR}/ferrybase/build)
+endif ()
+
 #set (Boost_DEBUG 1)
-find_package(Boost 1.63.0)
-IF(NOT Boost_FOUND)
-  message ("Boost compiler: ${Boost_COMPILER}")
-  message (FATAL_ERROR "Boost not found!")
-ENDIF(NOT Boost_FOUND)
 SET(Boost_USE_STATIC_LIBS ON)
 SET(Boost_USE_MULTITHREADED ON)
 SET(Boost_USE_STATIC_RUNTIME OFF)
+find_package(Boost 1.58.0 REQUIRED COMPONENTS system serialization thread exception date_time regex)
 
 IF (DEFINED _DEBUG)
 ADD_DEFINITIONS(-D_DEBUG=${_DEBUG})
@@ -74,25 +83,26 @@ foreach(CONFIGURATION IN LISTS CMAKE_CONFIGURATION_TYPES)
   message(${CONFIGURATION})
 endforeach()
 link_directories(
-  ${Boost_LIBRARY_DIRS}
-  "C:/Program Files/boost_1_65_1/lib64-msvc-14.1"
+   ${CMAKE_INSTALL_FULL_LIBDIR}
+   ${Boost_LIBRARY_DIRS}
+   "C:/Program Files/boost_1_65_1/lib64-msvc-14.1"
 )
 if(NOT LINKAGE)
-  set(LINKAGE "STATIC")
-  message("Building static by default")
+   set(LINKAGE "STATIC")
+   message("Building static by default")
 else(NOT LINKAGE)
-  string(TOUPPER "${LINKAGE}" LINKAGE)
+   string(TOUPPER "${LINKAGE}" LINKAGE)
 endif()
 
 if(CMAKE_CONFIGURATION_TYPES)
-  message("Linking corresponding to the Configuration Name")
-  link_directories("../ferrybase/build/$(ConfigurationName)")
-  link_directories("../logger/build/$(ConfigurationName)")
-  link_directories("../FFJSON/build/$(ConfigurationName)")
+   message("Linking corresponding to the Configuration Name")
+   link_directories("${DEPS_DIR}/ferrybase/build/$(ConfigurationName)")
+   link_directories("${DEPS_DIR}/logger/build/$(ConfigurationName)")
+   link_directories("${DEPS_DIR}/FFJSON/build/$(ConfigurationName)")
 else(CMAKE_CONFIGURATION_TYPES)
-  link_directories("../ferrybase/build")
-  link_directories("../logger/build")
-  link_directories("../FFJSON/build")
+   link_directories("${DEPS_DIR}/ferrybase/build")
+   link_directories("${DEPS_DIR}/logger/build")
+   link_directories("${DEPS_DIR}/FFJSON/build")
 endif()
 message("ARCHITECTURE: ${ARCHITECTURE}/${CMAKE_BUILD_TYPE}")
 message("${Boost_LIBRARY_DIRS}${Boost_INCLUDE_DIRS}")
@@ -129,7 +139,7 @@ message("${Boost_LIBRARY_DIRS}${Boost_INCLUDE_DIRS}")
 #    find_library(REGEX_LIB libboost_regex-vc140-mt-gd-1_63.lib HINTS "C:/Program Files/boost/lib64-msvc-14.0")
 #  ENDIF (MINGW)
 #ENDIF (macOS)
-include_directories(${Boost_INCLUDE_DIRS} ".." "../FFJSON" "../logger")
+include_directories(${Boost_INCLUDE_DIRS} "${DEPS_DIR}" "${DEPS_DIR}/FFJSON" "${DEPS_DIR}/logger")
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 #target_link_libraries(${PROJECT_NAME} "${SERIALIZE_LIB}" "${SYSTEM_LIB}" "${THREAD_LIB}" "${EXCEPTION_LIB}" FFJSON logger ferrybase)
 target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} FFJSON logger ferrybase)
@@ -140,14 +150,14 @@ target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES} FFJSON logger ferrybase
 #)
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES "${PROJECT_SOURCE_DIR}/config.json"
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
-    RENAME ${PROJECT_NAME}.json
+   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}
+   RENAME ${PROJECT_NAME}.json
 )
 install(FILES "${PROJECT_SOURCE_DIR}/init.conf"
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init
-    RENAME ${PROJECT_NAME}.init
+   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init
+   RENAME ${PROJECT_NAME}.init
 )
 install(FILES "${PROJECT_SOURCE_DIR}/init.override"
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init
-    RENAME ${PROJECT_NAME}.override
+   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/init
+   RENAME ${PROJECT_NAME}.override
 )
