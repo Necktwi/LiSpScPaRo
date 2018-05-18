@@ -1,7 +1,7 @@
 language: cpp
 env:
   global:
-   - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+   - #DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
 
 sudo: true
 before_install:
@@ -12,7 +12,7 @@ before_install:
      if [ $TRAVIS_OS_NAME = osx ]; then
       brew install boost
      fi
-     cd ${DEPS_DIR}
+     pwd
      git clone --depth=1 https://github.com/necktwi/ferrybase.git
      cd ferrybase
      mkdir build
@@ -34,4 +34,4 @@ before_install:
      cd ../..
 script:
    - |
-     mkdir -p build && cd build && cmake -DDEPS_DIR=${DEPS_DIR} .. && make
+     mkdir -p build && cd build && cmake .. && make
