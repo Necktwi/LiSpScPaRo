@@ -33,7 +33,8 @@ before_install:
      make
      cd ../..
 script:
-   - mkdir build
-   - cd build
-   - cmake -DDEPS_DIR=${DEPS_DIR} ..
-   - make
+   - |
+     mkdir -p build
+     cd build
+     cmake -DDEPS_DIR=${DEPS_DIR} ..
+     make
