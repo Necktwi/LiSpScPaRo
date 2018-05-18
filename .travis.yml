@@ -1,5 +1,10 @@
 language: cpp
-sudo: enabled
+env:
+  global:
+    # Ubuntu version
+    - DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
+    
+sudo: true
 before_install:
    - |
      if [ $TRAVIS_OS_NAME = linux ]; then
