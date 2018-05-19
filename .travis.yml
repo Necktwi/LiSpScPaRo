@@ -2,7 +2,18 @@ language: cpp
 env:
   global:
    - #DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
-
+matrix:
+   include:
+   # works on Precise and Trusty
+      - os: linux
+      addons:
+         apt:
+            sources:
+            - ubuntu-toolchain-r-test
+            packages:
+            - g++-7
+      env:
+         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 sudo: true
 before_install:
    - |
@@ -13,25 +24,26 @@ before_install:
       brew install boost
      fi
      pwd
+     cd
      git clone --depth=1 https://github.com/necktwi/ferrybase.git
      cd ferrybase
      mkdir build
      cd build
      cmake ..
      make
-     cd ../..
+     cd
      git clone --depth=1 https://github.com/necktwi/logger.git
      cd logger
      mkdir build
      cmake ..
      make
-     cd ../..
+     cd
      git clone --depth=1 https://github.com/necktwi/FFJSON.git
      cd FFJSON
      mkdir build
      cmake ..
      make
-     cd ../..
+     cd
 script:
    - |
      mkdir -p build && cd build && cmake .. && make
