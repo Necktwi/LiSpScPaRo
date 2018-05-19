@@ -24,7 +24,7 @@ before_install:
       brew install boost
      fi
      pwd
-     cd
+     cd ..
      pwd
      git clone --depth=1 https://github.com/necktwi/ferrybase.git
      cd ferrybase
@@ -32,19 +32,20 @@ before_install:
      cd build
      cmake ..
      make
-     cd
+     cd ../..
      git clone --depth=1 https://github.com/necktwi/logger.git
      cd logger
      mkdir build
      cmake ..
      make
-     cd
+     cd ../..
      git clone --depth=1 https://github.com/necktwi/FFJSON.git
      cd FFJSON
      mkdir build
      cmake ..
      make
-     cd
+     cd ../..
 script:
    - |
+     cd ${TRAVIS_BUILD_DIR}
      mkdir -p build && cd build && cmake .. && make
