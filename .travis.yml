@@ -18,7 +18,7 @@ sudo: true
 before_install:
    - |
      if [ $TRAVIS_OS_NAME = linux ]; then
-      sudo apt-get install libboost-dev
+      sudo apt-get install libboost-dev libssl-dev libxml2-dev bluez zlib1g-dev
      fi
      if [ $TRAVIS_OS_NAME = osx ]; then
       brew install boost
