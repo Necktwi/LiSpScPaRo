@@ -4,16 +4,16 @@ env:
    - #DEPS_DIR=${TRAVIS_BUILD_DIR}/deps
 matrix:
    include:
-   # works on Precise and Trusty
+      # works on Precise and Trusty
       - os: linux
-      addons:
-         apt:
-            sources:
-            - ubuntu-toolchain-r-test
-            packages:
-            - g++-7
-      env:
-         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+         addons:
+            apt:
+               sources:
+                  - ubuntu-toolchain-r-test
+               packages:
+                  - g++-7
+         env:
+            - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
 sudo: true
 before_install:
    - |
@@ -25,6 +25,7 @@ before_install:
      fi
      pwd
      cd
+     pwd
      git clone --depth=1 https://github.com/necktwi/ferrybase.git
      cd ferrybase
      mkdir build
