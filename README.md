@@ -1,6 +1,7 @@
 Rock-Paper-Scissors-Spock-Lizard
 ================================
 ![Travi-CI](https://travis-ci.com/necktwi/LiSpScPaRo.svg?branch=master)
+
 LICENSE
 -------
 The MIT License (MIT)
@@ -27,25 +28,25 @@ THE SOFTWARE.
 
 Installation
 ------------
-# Install cmake
-## macOS
+### Install cmake
+#### macOS
 brew install cmake
 or
 sudo port install cmake
-## Ubuntu/Debian|Linux
+#### Ubuntu/Debian|Linux
 sudo apt install cmake
-## Windows
+#### Windows
 1. Download https://cmake.org/files/v3.7/cmake-3.7.2-win32-x86.msi
 2. install it with option add to the system path checked
 3. Download and install https://www.microsoft.com/en-in/download/confirmation.aspx?id=5555
-# Installing boost
-## macOS
+### Installing boost
+#### macOS
 brew install boost
 or
 sudo port install boost
-## Ubuntu/Debian|Linux
+#### Ubuntu/Debian|Linux
 sudo apt install libboost-all-dev
-## Windows
+#### Windows
 1. download relevent binary from https://sourceforge.net/projects/boost/files/boost-binaries/1.63.0/
 2. for visual studio 2015 download boost_1_63_0-msvc-14.0-32.exe
 3. run the binary as administrator
@@ -57,16 +58,16 @@ Build LiSpScPaRo
 2. cd to workspace
 3. make directory buildLiSpScPaRo
 4. cd to buildLiSpScPaRo
-# macOS
+### macOS
 5. cmake ../LiSpScPaRo -G Xcode
 6. xcodebuild
 7. cd Debug
 8. ./LiSpScPaRo
-# Linux
+### Linux
 5. cmake ../LiSpScPaRo
 6. make
 8. ./LiSpScPaRo
-# Windows
+### Windows
 5. cmake ..\LiSpScPaRo -G "Visual Studio 14 2015"
 6. add "C:\Program Files (x86)\MSBuild\14.0\Bin" to the path
 7. msbuild LiSpScPaRo.sln
