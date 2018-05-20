@@ -36,11 +36,11 @@ using namespace std;
 
 enum PAWN:uint8_t
 {
-   LIZARD		= 1<<0,
-   SPOCK		   = 1<<1,
-   SCISSORS	   = 1<<2,
-   PAPER		   = 1<<3,
-   ROCK		   = 1<<4
+   LIZARD      = 1<<0,
+   SPOCK       = 1<<1,
+   SCISSORS    = 1<<2,
+   PAPER	      = 1<<3,
+   ROCK        = 1<<4
 };
 
 struct Pawn_ {
