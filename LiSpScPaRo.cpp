@@ -36,370 +36,400 @@ using namespace std;
 
 enum PAWN:uint8_t
 {
-    LIZARD		= 1<<0,
-    SPOCK		= 1<<1,
-    SCISSORS	= 1<<2,
-    PAPER		= 1<<3,
-    ROCK		= 1<<4
+   LIZARD		= 1<<0,
+   SPOCK		   = 1<<1,
+   SCISSORS	   = 1<<2,
+   PAPER		   = 1<<3,
+   ROCK		   = 1<<4
 };
 
-struct Pawn {
-    uint8_t self;
-    uint8_t winners;
-    uint8_t loosers;
+struct Pawn_ {
+   uint8_t self;
+   uint8_t winners;
+   uint8_t loosers;
 };
-class Player;
-typedef boost::shared_ptr<Player> PlayerPtr;
+class Player_;
+typedef boost::shared_ptr<Player_>  PlayerPtr_;
 
-boost::hash<string> StringHash;
-typedef map<string,PlayerPtr> PlayerMap;
-typedef map<PAWN, unsigned int> PawnCountMap;
-class Player{
+boost::hash<string>                 StringHash;
+typedef map<string, PlayerPtr_>     PlayerMap_;
+typedef map<PAWN, unsigned int>     PawnCountMap_;
+class Player_ {
 public:
-    friend class boost::serialization::access;
-    Player() {
-    }
-    Player(string sName, string sPassword):Player(){
-        m_sName=sName;
-        m_szPassword = StringHash(sPassword);
-    }
-    string GetName(){
-        return m_sName;
-    }
-    bool isPasswordValid(string sPassword){
-        return m_szPassword==StringHash(sPassword);
-    }
-    bool operator< (const Player &other) const {
-        if(m_usWinPercentage==other.m_usWinPercentage)return (m_sName<other.m_sName);
-        return m_usWinPercentage < other.m_usWinPercentage;
-    }
-    float m_usWinPercentage=50.0f;
-    PawnCountMap m_mPawnCount={ { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
-    unsigned int m_uiGamesDraw=0;
-    
+   friend class boost::serialization::access;
+   Player_ () {
+   }
+   Player_ (string sName, string sPassword) : Player_ () {
+      Name = sName;
+      PasswordHash = StringHash(sPassword);
+   }
+   string say_name(){
+      return Name;
+   }
+   bool is_valid_password(string sPassword){
+      return PasswordHash==StringHash(sPassword);
+   }
+   bool operator< (const Player_ &other) const {
+      if(WinPercent==other.WinPercent)return (Name<other.Name);
+      return WinPercent < other.WinPercent;
+   }
+   float WinPercent=50.0f;
+   PawnCountMap_ PawnCountMap = { { LIZARD, 0 }, { SPOCK, 0 }, { SCISSORS, 0 },
+      { PAPER, 0 }, { ROCK, 0 }
+   };
+   unsigned int GamesDraw = 0;
+   
 private:
-    string m_sName;
-    size_t m_szPassword;
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {
-        ar & m_sName;
-        ar & m_szPassword;
-        ar & m_usWinPercentage;
-        ar & m_mPawnCount;
-    }
-    
+   string Name;
+   size_t PasswordHash;
+   template<class Archive>
+   void serialize(Archive& ar, const unsigned int version) {
+      ar & Name;
+      ar & PasswordHash;
+      ar & WinPercent;
+      ar & PawnCountMap;
+   }
+   
 };
 
 static FFJSON ffPlayers("file://Players.json");
 
-bool operator<(const PlayerPtr p1, const PlayerPtr p2) {
-    return *p1<*p2;
+bool operator<(const PlayerPtr_ p1, const PlayerPtr_ p2) {
+   return *p1<*p2;
 };
 
-BOOST_CLASS_VERSION(Player, 1)
+BOOST_CLASS_VERSION(Player_, 1)
 
-PlayerPtr pPlayer;
-PlayerPtr pNewPlayer;
-list<PlayerPtr> lspPlayers;
+PlayerPtr_        Player_P;
+PlayerPtr_        NewPlayer_P;
+list<PlayerPtr_>  Players_PLS;
 
-void newclienthandle(tcp_connection::pointer new_connection){
-    PlayerPtr pPlayer(new Player());
-    pNewPlayer= PlayerPtr(new Player());
-    if(new_connection->read(*pNewPlayer)<=0){
-        pNewPlayer.reset();
-        return;
-    }
-    lspPlayers.push_back(pNewPlayer);
-    cout << endl << pNewPlayer->GetName() << " is waiting to play with you!"<<endl;
+void handle_new_client (tcp_connection::pointer new_connection) {
+   PlayerPtr_ pPlayer(new Player_());
+   NewPlayer_P= PlayerPtr_(new Player_());
+   if(new_connection->read(*NewPlayer_P)<=0){
+      NewPlayer_P.reset();
+      return;
+   }
+   Players_PLS.push_back(NewPlayer_P);
+   cout << endl << NewPlayer_P->say_name() << " is waiting to play with you!" <<
+   endl;
 }
 
-int main()
-{
-    string sPawn;
-    cout << R"dewed(
-    ---------------------------------------
-    |     Lizard[Li]  >  Spock[Sp]        |
-    |        >  \/       /\   >           |
-    | Rock[Ro]     ./ > '\   Scissors[Sc] |
-    |           <          <              |
-    |             Paper[Pa]               |
-    ---------------------------------------
-    )dewed" << endl;
-    cout << "anything else other than the above will **exit** the game" << endl;
-    
-    PlayerMap mPlayer;
-    vector<PlayerPtr> vPlayer;
-    string player;
-    string password;
-    string decision;
-    static map<PAWN, Pawn> mPawns;
-    static map<string, PAWN> msPawn;
-    static map<PAWN, string> mpPawn;
-    static map<uint8_t, string> mpPawnsAction;
-    PawnCountMap mPawnCount= { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
-    PawnCountMap mOPawnCount = { { LIZARD,0 },{ SPOCK,0 },{ SCISSORS,0 },{ PAPER,0 },{ ROCK,0 } };
-    
-    mPawns[LIZARD]		= { LIZARD, ROCK | SCISSORS, SPOCK | PAPER };
-    mPawns[SPOCK]		= { SPOCK, LIZARD | PAPER, SCISSORS | ROCK };
-    mPawns[SCISSORS]	= { SCISSORS, ROCK | SPOCK, PAPER | LIZARD };
-    mPawns[PAPER]		= { PAPER, SCISSORS | LIZARD, ROCK | SPOCK };
-    mPawns[ROCK]		= { ROCK, PAPER | SPOCK, LIZARD | SCISSORS };
-    
-    mpPawnsAction[SCISSORS | LIZARD] = "decapitated";
-    mpPawnsAction[SCISSORS | SPOCK] = "smashed";
-    mpPawnsAction[SCISSORS | PAPER] = "cut";
-    mpPawnsAction[SCISSORS | ROCK] = "blunted";
-    mpPawnsAction[LIZARD | SPOCK] = "poisoned";
-    mpPawnsAction[LIZARD | PAPER] = "eaten";
-    mpPawnsAction[LIZARD | ROCK] = "crushed";
-    mpPawnsAction[SPOCK | PAPER] = "disproved";
-    mpPawnsAction[SPOCK | ROCK] = "vaporized";
-    mpPawnsAction[PAPER | ROCK] = "covered";
-    
-    mpPawn[SPOCK]		= "Spock";
-    mpPawn[SCISSORS]	= "Scissors";
-    mpPawn[LIZARD]		= "Lizard";
-    mpPawn[PAPER]		= "Paper";
-    mpPawn[ROCK]		= "Rock";
-    
-    msPawn["li"]		= LIZARD;
-    msPawn["lizard"]	= LIZARD;
-    msPawn["spock"]		= SPOCK;
-    msPawn["sp"]		= SPOCK;
-    msPawn["scissors"]	= SCISSORS;
-    msPawn["sc"]		= SCISSORS;
-    msPawn["paper"]		= PAPER;
-    msPawn["pa"]		= PAPER;
-    msPawn["rock"]		= ROCK;
-    msPawn["ro"]		= ROCK;
-
-    
-    // Load players form archive
-    ifstream ifs(PLAYERS);
-    if(ifs.is_open()){
-        boost::archive::binary_iarchive ia(ifs);
-        ia >> mPlayer;
-        ifs.close();
-    }
-    cout << "Players in the archive:" << endl;
-    PlayerMap::iterator it=mPlayer.begin();
-    while(it!=mPlayer.end()){
-        vPlayer.push_back(it->second);
-        ++it;
-    }
-    sort(vPlayer.begin(),vPlayer.end());
-    int count = 1;
-    for(int i=vPlayer.size()-1;i>=0;--i){
-        cout << count++ <<".\t"<<vPlayer[i]->GetName() << " (" << setprecision(4) << vPlayer[i]->m_usWinPercentage <<"%)"<<endl;
-    }
-login:
-    cout << "Name: ";
-    cin >> player;
-enterpassword:
-    cout << "Password: ";
-    cin >> password;
-    it=mPlayer.find(player);
-    if(it==mPlayer.end()){
-        cout << "Proceed with new player with name " << player << " and password " << password << "? [y/n/x(exit)]: ";
-        cin >> decision;
-        if(decision=="y"){
-        createplayer:
-            pPlayer = PlayerPtr(new Player(player,password));
-            mPlayer[player]=pPlayer;
-        }else if(decision=="n"){
-            goto login;
-        }else{
-            return 0;
-        }
-    }else{
-        if(!it->second->isPasswordValid(password)){
-            cout << "Invalid Password! retry[r]? create new player with this password? [r/y/n]: ";
-            cin >> decision;
-            if(decision=="y"){
-                goto createplayer;
-            }else if(decision=="r"){
-                goto enterpassword;
-            }else{
-                goto login;
-            }
-        }else{
-            pPlayer=it->second;
-            
-        }
-    }
-    
-createserver:
-    boost::asio::io_service io_service;
-    boost::shared_ptr<tcp_server> pserver;
-    try
-    {
-        pserver=boost::shared_ptr<tcp_server>(new tcp_server(io_service,&newclienthandle));
-    }
-    catch (std::exception& e)
-    {
-        std::cerr << e.what() << std::endl;
-    }
-    boost::thread_group thr_grp;
-    thr_grp.create_thread(boost::bind(&tcp_server::start_accept, pserver));
-    
-chooseopponent:
-    PlayerPtr pOpponent(new Player());
-    string sOpponent;
-    cout << "Whom do you wanna play with? [computer/player(name/address)]: ";
-    cin >> sOpponent;
-    tcp_connection::pointer pConnection;
-    if(sOpponent!="computer"){
-        list<PlayerPtr>::iterator it = lspPlayers.begin();
-        int i=0;
-        while( it!=lspPlayers.end() && (*it)->GetName()!=sOpponent){it++;i++;}
-        if(it==lspPlayers.end()){
-            cout << "connecting to " << sOpponent << endl;
-            if(!(pConnection=pserver->connect(sOpponent, to_string(PORT)))){
-                cout << "couldn't connect to the opponent. choose again!";
-                goto chooseopponent;
-            }
-            if(pConnection->write(*pPlayer)<=0){
-                pConnection.reset();
-                cout << "Couldn't connect to "<<sOpponent<<endl;
-                goto chooseopponent;
-            }
-            cout << "waiting for the " << sOpponent << endl;
-            if(pConnection->read(*pOpponent)<=0){
-                pConnection.reset();
-                cout << "Couldn't connect to "<<sOpponent<<endl;
-                goto chooseopponent;
-            }
-            lspPlayers.push_back(pOpponent);
-            sOpponent=pOpponent->GetName();
-            cout << sOpponent << " connected!" << endl;
-        }else{
-            sOpponent=(*it)->GetName();
-            list<tcp_connection::pointer>::iterator itc=pserver->GetConnections().begin();
-            while(i>0){
-                itc++;
-                i--;
-            }
-            pConnection=*itc;
-            if(pConnection->write(*pPlayer)<=0){
-                cout<< "couldn't connect "<<sOpponent << endl;
-                pConnection.reset();
-                remove(lspPlayers.begin(),lspPlayers.end(),*it);
-                goto chooseopponent;
-            }
-            cout << "connected!" <<endl;
-            pOpponent=*it;
-        }
-    }else{
-        pOpponent=mPlayer[sOpponent];
-        if(!pOpponent)pOpponent=boost::shared_ptr<Player>(new Player(sOpponent,"1631729"));
-    }
-    mPlayer[sOpponent]=pOpponent;
-    cout << "---------------------------------Good Luck!-----------------------------" << endl;
-    unsigned int uiTotalGames = 0;
-    unsigned int uiGamesWon = 0;
-    float uiWinPercentage = 50;
-    unsigned int uiGamesDraw = 0;
-play:
-    while (true) {
-        if(!sOpponent.length())goto chooseopponent;
-        cout << "Choose your pawn: ";
-        cin >> sPawn;
-        for (int i = 0; sPawn[i]; i++) sPawn[i] = tolower(sPawn[i]);
-        if (msPawn.find(sPawn) == msPawn.end()) {
-            goto scoresonexit;
-        }
-        
-        PAWN self = msPawn[sPawn];
-        PAWN opponent;
-        if(pConnection){
-            try{
-                if(pConnection->write(self)<=0)throw exception();
-                if(pConnection->read(opponent)<=0)throw exception();
-            }catch(exception e){
-                cout << "connection lost with " << sOpponent << endl;
-                remove(lspPlayers.begin(),lspPlayers.end(),pOpponent);
-                pConnection.reset();
-                sOpponent.clear();
-                goto scoresonexit;
-            }
-        }else{
-            opponent = (PAWN)(1 << (rand() % 5));
-        }
-        ++uiTotalGames;
-        mPawnCount[self]++;
-        mOPawnCount[opponent]++;
-        if (self == opponent) {
-            uiGamesDraw++;
-            cout << sOpponent <<" also came with " << mpPawn[opponent] << "!\n***----***" << endl;
-        }
-        else if ((mPawns[self].loosers&opponent) == opponent) {
-            ++uiGamesWon;
-            cout << "Your " << mpPawn[self] << " has " << mpPawnsAction[self | opponent] << " "<<sOpponent<<"'s " << mpPawn[opponent] << endl <<"***Win!***" << endl;
-        }
-        else {
-            cout << sOpponent<<"'s " << mpPawn[opponent] << " has " << mpPawnsAction[self | opponent] << " your " << mpPawn[self] <<endl<< "***xxxx***" << endl;
-        }
-        
-    }
-scoresonexit:
-    if(uiTotalGames-uiGamesDraw)uiWinPercentage = (float)uiGamesWon * 100 / (uiTotalGames-uiGamesDraw);
-    cout << "You have won " << setprecision(4) << uiWinPercentage << "% of games played" << endl;
-    
-    // find the number of occassions in which player has made each of the five possible choices
-    unsigned int iAllPawnsChoosenCount = 0;
-    map<PAWN,unsigned int>::iterator itPawnCount= mPawnCount.begin();
-    if (itPawnCount != mPawnCount.end()) {
-        iAllPawnsChoosenCount = itPawnCount->second;
-        ++itPawnCount;
-        while (itPawnCount != mPawnCount.end()) {
-            if (iAllPawnsChoosenCount > itPawnCount->second)
-                iAllPawnsChoosenCount = itPawnCount->second;
-            ++itPawnCount;
-        }
-    }
-    cout << "In " << iAllPawnsChoosenCount << " occasions the player has made each of the five possible choices." << endl;
-    
-    if (uiWinPercentage == 50.00f) {
-        cout << "Its a draw!" << endl;
-    }
-    else if (uiWinPercentage > 50.00f) {
-        cout << "You won!" << endl;
-    }
-    else {
-        cout << "You lost!" << endl;
-    }
-    
-    cout << "saving the scores..." << endl;
-    PawnCountMap::iterator itc = pPlayer->m_mPawnCount.begin();
-    unsigned int uiNetGamesPlayed=0;
-    while(itc!=pPlayer->m_mPawnCount.end()){
-        uiNetGamesPlayed += itc->second;
-        itc->second+=mPawnCount[itc->first];
-        itc++;
-    }
-    itc = pOpponent->m_mPawnCount.begin();
-    unsigned int uiONetGamesPlayed=0;
-    while(itc!=pOpponent->m_mPawnCount.end()){
-        uiONetGamesPlayed += itc->second;
-        itc->second+=mOPawnCount[itc->first];
-        itc++;
-    }
-    unsigned int uiNetGamesWon = pPlayer->m_usWinPercentage*(uiNetGamesPlayed-pPlayer->m_uiGamesDraw) / 100;
-    unsigned int uiONetGamesWon = pOpponent->m_usWinPercentage*(uiONetGamesPlayed-pOpponent->m_uiGamesDraw) / 100;
-    pPlayer->m_usWinPercentage=(float)(uiNetGamesWon+uiGamesWon)*100/(uiNetGamesPlayed+uiTotalGames-pPlayer->m_uiGamesDraw-uiGamesDraw);
-    pOpponent->m_usWinPercentage=(float)(uiONetGamesWon+(uiTotalGames-uiGamesDraw-uiGamesWon))*100/(uiONetGamesPlayed+uiTotalGames-pOpponent->m_uiGamesDraw-uiGamesDraw);
-    pPlayer->m_uiGamesDraw += uiGamesDraw;
-    pOpponent->m_uiGamesDraw += uiGamesDraw;
-    std::ofstream ofs(PLAYERS);
-    if(ofs.is_open()){
-        boost::archive::binary_oarchive oa(ofs);
-        oa << mPlayer;
-        ofs.close();
-    }
-    cout << "Do you want to stop playing? [y/n]: ";
-    cin >> sPawn;
-    if (tolower(sPawn[0]) == 'n')goto play;
-    pPlayer=NULL;
-    return 0;
+int main() {
+   string sPawn;
+   cout << R"dewed(
+   ---------------------------------------
+   |     Lizard[Li]  >  Spock[Sp]        |
+   |        >  \/       /\   >           |
+   | Rock[Ro]     ./ > '\   Scissors[Sc] |
+   |           <          <              |
+   |             Paper[Pa]               |
+   ---------------------------------------
+   )dewed" << endl;
+   cout << "anything else other than the above will **exit** the game" << endl;
+   
+   PlayerMap_ Player_M;
+   vector<PlayerPtr_> PlayerPtr_V;
+   string player;
+   string password;
+   string decision;
+   static map<PAWN, Pawn_>       PawnsEnumMap;
+   static map<string, PAWN>      PawnStrEnumMap;
+   static map<PAWN, string>      PawnEnumStrMap;
+   static map<uint8_t, string>   PawnIdActionMap;
+   PawnCountMap_ EachPawnCount = { { LIZARD, 0 }, { SPOCK, 0 }, { SCISSORS, 0 },
+      { PAPER, 0 }, { ROCK, 0 }
+   };
+   PawnCountMap_ EachOppPawnCount = { { LIZARD, 0 }, { SPOCK, 0 },
+      { SCISSORS, 0 }, { PAPER, 0 }, { ROCK, 0 }
+   };
+   
+   PawnsEnumMap[LIZARD]		= { LIZARD, ROCK | SCISSORS, SPOCK | PAPER };
+   PawnsEnumMap[SPOCK]		= { SPOCK, LIZARD | PAPER, SCISSORS | ROCK };
+   PawnsEnumMap[SCISSORS]	= { SCISSORS, ROCK | SPOCK, PAPER | LIZARD };
+   PawnsEnumMap[PAPER]		= { PAPER, SCISSORS | LIZARD, ROCK | SPOCK };
+   PawnsEnumMap[ROCK]		= { ROCK, PAPER | SPOCK, LIZARD | SCISSORS };
+   
+   PawnIdActionMap[SCISSORS | LIZARD]  = "decapitated";
+   PawnIdActionMap[SCISSORS | SPOCK]   = "smashed";
+   PawnIdActionMap[SCISSORS | PAPER]   = "cut";
+   PawnIdActionMap[SCISSORS | ROCK]    = "blunted";
+   PawnIdActionMap[LIZARD | SPOCK]     = "poisoned";
+   PawnIdActionMap[LIZARD | PAPER]     = "eaten";
+   PawnIdActionMap[LIZARD | ROCK]      = "crushed";
+   PawnIdActionMap[SPOCK | PAPER]      = "disproved";
+   PawnIdActionMap[SPOCK | ROCK]       = "vaporized";
+   PawnIdActionMap[PAPER | ROCK]       = "covered";
+   
+   PawnEnumStrMap[SPOCK]      = "Spock";
+   PawnEnumStrMap[SCISSORS]   = "Scissors";
+   PawnEnumStrMap[LIZARD]     = "Lizard";
+   PawnEnumStrMap[PAPER]      = "Paper";
+   PawnEnumStrMap[ROCK]	      = "Rock";
+   
+   PawnStrEnumMap["li"]	      = LIZARD;
+   PawnStrEnumMap["lizard"]   = LIZARD;
+   PawnStrEnumMap["spock"]	   = SPOCK;
+   PawnStrEnumMap["sp"]	      = SPOCK;
+   PawnStrEnumMap["scissors"]	= SCISSORS;
+   PawnStrEnumMap["sc"]	      = SCISSORS;
+   PawnStrEnumMap["paper"]	   = PAPER;
+   PawnStrEnumMap["pa"]	      = PAPER;
+   PawnStrEnumMap["rock"]		= ROCK;
+   PawnStrEnumMap["ro"]		   = ROCK;
+   
+   
+   // Load players form archive
+   ifstream ifs(PLAYERS);
+   if (ifs.is_open()) {
+      boost::archive::binary_iarchive ia(ifs);
+      ia >> Player_M;
+      ifs.close();
+   }
+   cout << "Players in the archive:" << endl;
+   PlayerMap_::iterator it=Player_M.begin();
+   while(it!=Player_M.end()){
+      PlayerPtr_V.push_back(it->second);
+      ++it;
+   }
+   sort(PlayerPtr_V.begin(),PlayerPtr_V.end());
+   int count = 1;
+   for (int i=PlayerPtr_V.size()-1;i>=0;--i) {
+      cout << count++ << ".\t" << PlayerPtr_V[i]->say_name() << " (" <<
+      setprecision(4) << PlayerPtr_V[i]->WinPercent << "%)" << endl;
+   }
+Login:
+   cout << "Name: ";
+   cin >> player;
+EnterPassword:
+   cout << "Password: ";
+   cin >> password;
+   it = Player_M.find(player);
+   if (it == Player_M.end()) {
+      cout << "Proceed with new player with name " << player << " and password "
+      << password << "? [y/n/x(exit)]: ";
+      cin >> decision;
+      if (decision == "y") {
+      createplayer:
+         Player_P = PlayerPtr_(new Player_(player,password));
+         Player_M[player]=Player_P;
+      }else if(decision=="n"){
+         goto Login;
+      }else{
+         return 0;
+      }
+   } else {
+      if (!it->second->is_valid_password(password)) {
+         cout << "Invalid Password! retry[r]? create new player with this password? [r/y/n]: ";
+         cin >> decision;
+         if(decision=="y"){
+            goto createplayer;
+         }else if(decision=="r"){
+            goto EnterPassword;
+         }else{
+            goto Login;
+         }
+      }else{
+         Player_P=it->second;
+         
+      }
+   }
+   
+CreateServer:
+   boost::asio::io_service IOService;
+   boost::shared_ptr<tcp_server> ServerPtr;
+   try
+   {
+      ServerPtr = boost::shared_ptr<tcp_server>(
+         new tcp_server(IOService,&handle_new_client)
+      );
+   }
+   catch (std::exception& e)
+   {
+      std::cerr << e.what() << std::endl;
+   }
+   boost::thread_group thr_grp;
+   thr_grp.create_thread(boost::bind(&tcp_server::start_accept, ServerPtr));
+   
+ChooseOpponent:
+   PlayerPtr_ OpponentPtr(new Player_());
+   string OpponentName;
+   cout << "Whom do you wanna play with? [computer/player(name/address)]: ";
+   cin >> OpponentName;
+   tcp_connection::pointer ConnectionPtr;
+   if (OpponentName!="computer") {
+      list<PlayerPtr_>::iterator it = Players_PLS.begin();
+      int i=0;
+      while (it!=Players_PLS.end() && (*it)->say_name()!=OpponentName) {
+         ++it;++i;
+      }
+      if (it==Players_PLS.end()) {
+         cout << "connecting to " << OpponentName << endl;
+         if (!(ConnectionPtr = 
+            ServerPtr->connect(OpponentName, to_string(PORT)))
+         ){
+            cout << "couldn't connect to the opponent. choose again!";
+            goto ChooseOpponent;
+         }
+         if (ConnectionPtr->write(*Player_P) <= 0) {
+            ConnectionPtr.reset();
+            cout << "Couldn't connect to " << OpponentName << endl;
+            goto ChooseOpponent;
+         }
+         cout << "waiting for the " << OpponentName << endl;
+         if (ConnectionPtr->read(*OpponentPtr) <= 0) {
+            ConnectionPtr.reset();
+            cout << "Couldn't connect to " << OpponentName <<endl;
+            goto ChooseOpponent;
+         }
+         Players_PLS.push_back(OpponentPtr);
+         OpponentName = OpponentPtr->say_name();
+         cout << OpponentName << " connected!" << endl;
+      } else {
+         OpponentName = (*it)->say_name();
+         list<tcp_connection::pointer>::iterator itc
+         = ServerPtr->GetConnections().begin();
+         while (i>0) {
+            itc++;
+            i--;
+         }
+         ConnectionPtr = *itc;
+         if (ConnectionPtr->write(*Player_P)<=0) {
+            cout<< "couldn't connect "<<OpponentName << endl;
+            ConnectionPtr.reset();
+            remove(Players_PLS.begin(),Players_PLS.end(),*it);
+            goto ChooseOpponent;
+         }
+         cout << "connected!" <<endl;
+         OpponentPtr = *it;
+      }
+   } else {
+      OpponentPtr = Player_M[OpponentName];
+      if (!OpponentPtr) OpponentPtr=boost::shared_ptr<Player_>(
+         new Player_(OpponentName,"1631729")
+      );
+   }
+   Player_M[OpponentName] = OpponentPtr;
+   cout << "-----------------------------Good Luck!---------------------------" 
+   << endl;
+   unsigned int TotalGames = 0;
+   unsigned int GamesWon   = 0;
+   float WinPercent        = 50;
+   unsigned int GamesDraw  = 0;
+Play:
+   while (true) {
+      if (!OpponentName.length()) goto ChooseOpponent;
+      cout << "Choose your pawn: ";
+      cin >> sPawn;
+      for (int i = 0; sPawn[i]; i++) sPawn[i] = tolower(sPawn[i]);
+      if (PawnStrEnumMap.find(sPawn) == PawnStrEnumMap.end()) {
+         goto ScoresOnExit;
+      }
+      
+      PAWN self = PawnStrEnumMap[sPawn];
+      PAWN opponent;
+      if(ConnectionPtr){
+         try {
+            if(ConnectionPtr->write(self)<=0)throw exception();
+            if(ConnectionPtr->read(opponent)<=0)throw exception();
+         } catch (exception e) {
+            cout << "connection lost with " << OpponentName << endl;
+            remove(Players_PLS.begin(),Players_PLS.end(),OpponentPtr);
+            ConnectionPtr.reset();
+            OpponentName.clear();
+            goto ScoresOnExit;
+         }
+      } else {
+         opponent = (PAWN)(1 << (rand() % 5));
+      }
+      ++TotalGames;
+      EachPawnCount[self]++;
+      EachOppPawnCount[opponent]++;
+      if (self == opponent) {
+         GamesDraw++;
+         cout << OpponentName <<" also came with " << PawnEnumStrMap[opponent] 
+         << "!\n***----***" << endl;
+      } else if ((PawnsEnumMap[self].loosers&opponent) == opponent) {
+         ++GamesWon;
+         cout << "Your " << PawnEnumStrMap[self] << " has " << 
+         PawnIdActionMap[self | opponent] << " " << OpponentName << "'s " << 
+         PawnEnumStrMap[opponent] << endl <<"***Win!***" << endl;
+      } else {
+         cout << OpponentName<< "'s " << PawnEnumStrMap[opponent] << " has " <<
+         PawnIdActionMap[self | opponent] << " your " << PawnEnumStrMap[self] <<
+         endl << "***xxxx***" << endl;
+      }
+      
+   }
+ScoresOnExit:
+   if (TotalGames-GamesDraw) 
+      WinPercent = (float)GamesWon * 100 / (TotalGames-GamesDraw);
+   cout << "You have won " << setprecision(4) << WinPercent << 
+   "% of games played" << endl;
+   
+   // find the number of occassions in which player has made each of the
+   // five possible choices
+   unsigned int AllPawnsChoosenCount_I = 0;
+   map<PAWN,unsigned int>::iterator PawnCount_Itr = EachPawnCount.begin();
+   if (PawnCount_Itr != EachPawnCount.end()) {
+      AllPawnsChoosenCount_I = PawnCount_Itr->second;
+      ++PawnCount_Itr;
+      while (PawnCount_Itr != EachPawnCount.end()) {
+         if (AllPawnsChoosenCount_I > PawnCount_Itr->second)
+            AllPawnsChoosenCount_I = PawnCount_Itr->second;
+         ++PawnCount_Itr;
+      }
+   }
+   cout << "In " << AllPawnsChoosenCount_I << 
+   " occasions the player has made each of the five possible choices." << endl;
+   
+   if (WinPercent == 50.00f) {
+      cout << "Its a draw!" << endl;
+   }
+   else if (WinPercent > 50.00f) {
+      cout << "You won!" << endl;
+   }
+   else {
+      cout << "You lost!" << endl;
+   }
+   
+   cout << "Saving the scores..." << endl;
+   PawnCountMap_::iterator itc = Player_P->PawnCountMap.begin();
+   unsigned int NetGamesPlayed = 0;
+   while(itc!=Player_P->PawnCountMap.end()){
+      NetGamesPlayed += itc->second;
+      itc->second += EachPawnCount[itc->first];
+      itc++;
+   }
+   itc = OpponentPtr->PawnCountMap.begin();
+   unsigned int OppNetGamesPlayed = 0;
+   while (itc != OpponentPtr->PawnCountMap.end()) {
+      OppNetGamesPlayed += itc->second;
+      itc->second += EachOppPawnCount[itc->first];
+      itc++;
+   }
+   unsigned int NetGamesWon = 
+   Player_P->WinPercent * (NetGamesPlayed-Player_P->GamesDraw) / 100;
+   unsigned int OppNetGamesWon = 
+   OpponentPtr->WinPercent*(OppNetGamesPlayed-OpponentPtr->GamesDraw) / 100;
+   Player_P->WinPercent = (float)(NetGamesWon + GamesWon) * 100 / 
+   (NetGamesPlayed + TotalGames - Player_P->GamesDraw - GamesDraw);
+   OpponentPtr->WinPercent = 
+   (float)(OppNetGamesWon + (TotalGames - GamesDraw - GamesWon)) * 100 / 
+   (OppNetGamesPlayed + TotalGames - OpponentPtr->GamesDraw - GamesDraw);
+   Player_P->GamesDraw += GamesDraw;
+   OpponentPtr->GamesDraw += GamesDraw;
+   std::ofstream ofs(PLAYERS);
+   if(ofs.is_open()){
+      boost::archive::binary_oarchive oa(ofs);
+      oa << Player_M;
+      ofs.close();
+   }
+   cout << "Do you want to stop playing? [y/n]: ";
+   cin >> sPawn;
+   if (tolower(sPawn[0]) == 'n') goto Play;
+   Player_P = NULL;
+   return 0;
 }
 
