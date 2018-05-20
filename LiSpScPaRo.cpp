@@ -176,8 +176,8 @@ int main() {
    PawnStrEnumMap["sc"]	      = SCISSORS;
    PawnStrEnumMap["paper"]	   = PAPER;
    PawnStrEnumMap["pa"]	      = PAPER;
-   PawnStrEnumMap["rock"]		= ROCK;
-   PawnStrEnumMap["ro"]		   = ROCK;
+   PawnStrEnumMap["rock"]     = ROCK;
+   PawnStrEnumMap["ro"]       = ROCK;
    
    
    // Load players form archive
